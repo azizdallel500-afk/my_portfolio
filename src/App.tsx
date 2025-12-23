@@ -2,35 +2,36 @@ import { BrowserRouter as Router, Routes, Route, Link, useParams } from 'react-r
 import { motion, useScroll, useSpring } from 'framer-motion';
 import CustomCursor from './components/CustomCursor';
 
-// --- DONNÉES DU PORTFOLIO (Issues de votre CV) ---
+// --- PORTFOLIO DATA ---
 const projects = [
   {
     id: "01",
     slug: "previsante",
-    role: "Product Owner & Mobile Dev", // [cite: 33, 36]
-    company: "ESIEA (CAP Projet)", // [cite: 33]
-    date: "2025 - Présent", // [cite: 33]
-    desc: "Pilotage du backlog sous Jira et développement Full Stack d'une solution logicielle mobile.", // [cite: 35, 36]
+    role: "Product Owner & Mobile Dev",
+    company: "ESIEA (CAP Projet)",
+    date: "2025 - Présent",
+    desc: "Pilotage du backlog sous Jira et développement Full Stack d'une solution logicielle mobile.",
     tags: ["React Native", "Jira", "BPMN"]
   },
   {
     id: "02",
     slug: "enovarobotics",
-    role: "Business Analyst", // [cite: 11]
-    company: "EnovaRobotics", // [cite: 12]
-    date: "2024", // [cite: 11]
-    desc: "Optimisation de la latence vidéo (-10%) via WebRTC et conception fonctionnelle mobile.", // [cite: 14, 16]
+    role: "Business Analyst",
+    company: "EnovaRobotics",
+    date: "2024",
+    desc: "Optimisation de la latence vidéo (-10%) via WebRTC et conception fonctionnelle mobile.",
     tags: ["WebRTC", "User Stories", "QA"]
   }
 ];
 
-// --- COMPOSANT : PAGE D'ACCUEIL ---
+// --- COMPONENT: HOME PAGE ---
 const Home = () => {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      {/* Progress Bar */}
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-[#1df220] origin-left z-[100]" style={{ scaleX }} />
       
       {/* HERO SECTION */}
@@ -51,7 +52,7 @@ const Home = () => {
         </motion.div>
       </section>
 
-      {/* SECTION PROJETS */}
+      {/* SELECTED WORKS SECTION */}
       <section className="py-32 px-10 md:px-32">
         <h2 className="text-5xl md:text-7xl font-black uppercase mb-20">Selected <span className="text-[#1df220]">Works</span></h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -84,10 +85,15 @@ const Home = () => {
   );
 };
 
-// --- COMPOSANT : DÉTAIL DU PROJET (PREVISANTE) ---
+// --- COMPONENT: PROJECT DETAIL ---
 const ProjectDetail = () => {
   const { slug } = useParams();
-  const images = Array.from({ length: 8 }, (_, i) => `/src/assets/previsante/${i + 1}.png`);
+  
+  // FIXED: Using import.meta.env.BASE_URL allows Vite to handle both local and production paths.
+  // Locally, this resolves to "/assets/...". On GitHub, it resolves to "/my_portfolio/assets/..."
+  const images = Array.from({ length: 8 }, (_, i) => 
+    `${import.meta.env.BASE_URL}assets/previsante/${i + 1}.png`
+  );
 
   if (slug !== "previsante") return <div className="pt-40 text-center">Projet en cours de documentation...</div>;
 
@@ -99,7 +105,7 @@ const ProjectDetail = () => {
 
       <div className="mt-16 mb-24">
         <h1 className="text-6xl md:text-8xl font-black uppercase">Previsante</h1>
-        <p className="text-[#1df220] font-bold mt-4 uppercase tracking-[0.2em]">Product Owner & Mobile Developer [cite: 33, 36]</p>
+        <p className="text-[#1df220] font-bold mt-4 uppercase tracking-[0.2em]">Product Owner & Mobile Developer</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-20">
@@ -107,7 +113,7 @@ const ProjectDetail = () => {
           <div className="border-l-2 border-[#1df220] pl-6">
             <h3 className="text-white font-black uppercase text-sm mb-4">Double Casquette</h3>
             <p className="text-gray-500 text-sm leading-relaxed">
-              En tant que **Product Owner**, j'ai structuré les besoins métiers et géré le Product Backlog sous **Jira**. 
+              En tant que **Product Owner**, j'ai structuré les besoins métiers et géré le Product Backlog sous **Jira**.
               Simultanément, j'ai assuré le rôle de **Développeur Mobile Full Stack**, transformant ces User Stories en fonctionnalités réelles.
             </p>
           </div>
@@ -125,8 +131,18 @@ const ProjectDetail = () => {
           <h3 className="text-white font-black uppercase text-sm mb-8 tracking-widest">Interface App Gallery</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {images.map((img, i) => (
-              <motion.div key={i} whileHover={{ scale: 1.05 }} className="glass-card rounded-2xl overflow-hidden border border-white/5">
-                <img src={img} alt={`Capture ${i + 1}`} className="w-full h-auto grayscale hover:grayscale-0 transition-all duration-500" />
+              <motion.div key={i} whileHover={{ scale: 1.05 }} className="glass-card rounded-2xl overflow-hidden border border-white/5 bg-[#111]">
+                <img 
+                  src={img} 
+                  alt={`Capture ${i + 1}`} 
+                  className="w-full h-auto grayscale hover:grayscale-0 transition-all duration-500 block" 
+                  onError={(e) => { 
+                    const target = e.target as HTMLImageElement;
+                    console.error("Local Error: Could not find image at", target.src);
+                    // Temporarily showing a border so you can see where the broken image is
+                    target.style.border = "2px solid red"; 
+                  }} 
+                />
               </motion.div>
             ))}
           </div>
@@ -136,12 +152,13 @@ const ProjectDetail = () => {
   );
 };
 
-// --- COMPOSANT RACINE (ROUTAGE) ---
+// --- ROOT COMPONENT ---
 export default function App() {
   return (
-    <Router>
+    // basename handles the subfolder path automatically based on your vite.config.js base.
+    <Router basename="/my_portfolio">
       <CustomCursor />
-      {/* NAVBAR */}
+      
       <nav className="fixed top-0 w-full z-[90] flex justify-between items-center px-10 py-8 bg-transparent pointer-events-none">
         <Link to="/" className="font-black text-xl uppercase tracking-tighter pointer-events-auto">
           AZIZ DALLEL<span className="text-[#1df220]">.</span>
